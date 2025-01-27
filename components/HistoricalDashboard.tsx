@@ -18,7 +18,7 @@ function formatDate(date: Date): string {
   return date.toISOString().split("T")[0]
 }
 
-export default function HistoricalDashboard() {
+export default function HistoricalDashboard({ userId }: { userId: string }) {
   const [data, setData] = useState([])
   const [weekStart, setWeekStart] = useState(getWeekStart(new Date()))
 
@@ -37,6 +37,7 @@ export default function HistoricalDashboard() {
         .select("*")
         .gte("date", startDate)
         .lte("date", endDate)
+        .eq("user_id", userId)
 
       if (error) {
         console.error("Error fetching historical data:", error)
@@ -59,7 +60,7 @@ export default function HistoricalDashboard() {
     }
 
     fetchHistoricalData()
-  }, [weekStart])
+  }, [weekStart, userId])
 
   function navigateWeek(direction: number) {
     const newWeekStart = new Date(weekStart)

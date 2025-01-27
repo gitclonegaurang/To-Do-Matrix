@@ -1,17 +1,22 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Label } from "@/components/ui/label"
 import { supabase } from "@/lib/supabase"
+import { format } from "date-fns"
 
-export default function TaskForm({ selectedDate, onDateChange }) {
+export default function TaskForm({ selectedDate, onDateChange, userId }) {
   const [task, setTask] = useState("")
-  const [date, setDate] = useState(selectedDate || new Date().toISOString().split("T")[0])
+  const [date, setDate] = useState(selectedDate || format(new Date(), "yyyy-MM-dd"))
   const [urgent, setUrgent] = useState(false)
   const [important, setImportant] = useState(false)
+
+  useEffect(() => {
+    setDate(selectedDate)
+  }, [selectedDate])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -21,6 +26,7 @@ export default function TaskForm({ selectedDate, onDateChange }) {
       urgent,
       important,
       completed: false,
+      user_id: userId,
     }
     console.log("Submitting new task:", newTask)
     const { data, error } = await supabase.from("tasks").insert([newTask])
@@ -30,7 +36,6 @@ export default function TaskForm({ selectedDate, onDateChange }) {
     } else {
       console.log("Task inserted successfully:", data)
       setTask("")
-      setDate(new Date().toISOString().split("T")[0])
       setUrgent(false)
       setImportant(false)
     }

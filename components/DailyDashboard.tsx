@@ -1,31 +1,20 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from "recharts"
 import { supabase } from "@/lib/supabase"
 
-export default function DailyDashboard({ selectedDate }) {
+export default function DailyDashboard({ selectedDate, userId }) {
   const [data, setData] = useState([])
 
-  useEffect(() => {
-    fetchTasks()
-  }, [selectedDate])
-
-  useEffect(() => {
-    const channel = supabase
-      .channel("daily_tasks_channel")
-      .on("postgres_changes", { event: "*", schema: "public", table: "tasks" }, fetchTasks)
-      .subscribe()
-
-    return () => {
-      supabase.removeChannel(channel)
-    }
-  }, [])
-
-  const fetchTasks = async () => {
+  const fetchTasks = useCallback(async () => {
     console.log("Fetching tasks for date:", selectedDate)
-    const { data: tasks, error } = await supabase.from("tasks").select("*").eq("date", selectedDate)
+    const { data: tasks, error } = await supabase
+      .from("tasks")
+      .select("*")
+      .eq("date", selectedDate)
+      .eq("user_id", userId)
 
     if (error) {
       console.error("Error fetching tasks:", error)
@@ -40,7 +29,26 @@ export default function DailyDashboard({ selectedDate }) {
       console.log("New chart data:", newData)
       setData(newData)
     }
-  }
+  }, [selectedDate, userId])
+
+  useEffect(() => {
+    fetchTasks()
+  }, [fetchTasks])
+
+  useEffect(() => {
+    const channel = supabase
+      .channel("daily_tasks_channel")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "tasks", filter: `user_id=eq.${userId}` },
+        fetchTasks,
+      )
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [userId, fetchTasks])
 
   const COLORS = ["#0088FE", "#00C49F"]
 

@@ -4,14 +4,15 @@ import { useState, useEffect } from "react"
 import TaskItem from "./TaskItem"
 import { supabase } from "@/lib/supabase"
 import { Button } from "@/components/ui/button"
+import { format, parseISO } from "date-fns"
 
-export default function TaskMatrix({ onDateChange }) {
+export default function TaskMatrix({ onDateChange, userId }) {
   const [tasks, setTasks] = useState([])
-  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split("T")[0])
+  const [selectedDate, setSelectedDate] = useState(format(new Date(), "yyyy-MM-dd"))
 
   useEffect(() => {
     fetchTasks()
-  }, [selectedDate])
+  }, [selectedDate]) // Removed userId from dependencies
 
   useEffect(() => {
     const channel = supabase
@@ -22,11 +23,11 @@ export default function TaskMatrix({ onDateChange }) {
     return () => {
       supabase.removeChannel(channel)
     }
-  }, [])
+  }, [userId])
 
   const fetchTasks = async () => {
     console.log("Fetching tasks for date:", selectedDate)
-    const { data, error } = await supabase.from("tasks").select("*").eq("date", selectedDate)
+    const { data, error } = await supabase.from("tasks").select("*").eq("date", selectedDate).eq("user_id", userId)
     if (error) {
       console.error("Error fetching tasks:", error)
     } else {
@@ -36,13 +37,17 @@ export default function TaskMatrix({ onDateChange }) {
   }
 
   const updateTask = async (updatedTask) => {
-    const today = new Date().toISOString().split("T")[0]
+    const today = format(new Date(), "yyyy-MM-dd")
     if (selectedDate !== today) {
       console.log("Cannot update tasks from previous dates")
       return
     }
 
-    const { data, error } = await supabase.from("tasks").update(updatedTask).eq("id", updatedTask.id)
+    const { data, error } = await supabase
+      .from("tasks")
+      .update(updatedTask)
+      .eq("id", updatedTask.id)
+      .eq("user_id", userId)
 
     if (error) {
       console.error("Error updating task:", error)
@@ -52,27 +57,36 @@ export default function TaskMatrix({ onDateChange }) {
     }
   }
 
+  const deleteTask = async (taskId) => {
+    const { error } = await supabase.from("tasks").delete().eq("id", taskId).eq("user_id", userId)
+
+    if (error) {
+      console.error("Error deleting task:", error)
+    } else {
+      console.log("Task deleted:", taskId)
+      fetchTasks()
+    }
+  }
+
   const carryForwardTasks = async () => {
     const unfinishedTasks = tasks.filter((task) => !task.completed)
-    const nextDay = new Date(selectedDate)
-    nextDay.setDate(nextDay.getDate() + 1)
-    const nextDayString = nextDay.toISOString().split("T")[0]
+    const nextDay = format(parseISO(selectedDate).setDate(parseISO(selectedDate).getDate() + 1), "yyyy-MM-dd")
 
     for (const task of unfinishedTasks) {
-      const { error } = await supabase.from("tasks").insert({ ...task, date: nextDayString, id: undefined })
+      const { error } = await supabase.from("tasks").insert({ ...task, date: nextDay, id: undefined, user_id: userId })
 
       if (error) {
         console.error("Error carrying forward task:", error)
       }
     }
 
-    setSelectedDate(nextDayString)
+    setSelectedDate(nextDay)
+    onDateChange(nextDay)
   }
 
   const handleDateChange = (newDate) => {
     setSelectedDate(newDate)
     onDateChange(newDate)
-    fetchTasks()
   }
 
   return (
@@ -84,7 +98,7 @@ export default function TaskMatrix({ onDateChange }) {
           onChange={(e) => handleDateChange(e.target.value)}
           className="border rounded p-2"
         />
-        {selectedDate === new Date().toISOString().split("T")[0] && (
+        {selectedDate === format(new Date(), "yyyy-MM-dd") && (
           <Button onClick={carryForwardTasks}>Carry Forward Unfinished Tasks</Button>
         )}
       </div>
@@ -98,7 +112,8 @@ export default function TaskMatrix({ onDateChange }) {
                 key={task.id}
                 task={task}
                 updateTask={updateTask}
-                isEditable={selectedDate === new Date().toISOString().split("T")[0]}
+                deleteTask={deleteTask}
+                isEditable={selectedDate === format(new Date(), "yyyy-MM-dd")}
               />
             ))}
         </div>
@@ -111,7 +126,8 @@ export default function TaskMatrix({ onDateChange }) {
                 key={task.id}
                 task={task}
                 updateTask={updateTask}
-                isEditable={selectedDate === new Date().toISOString().split("T")[0]}
+                deleteTask={deleteTask}
+                isEditable={selectedDate === format(new Date(), "yyyy-MM-dd")}
               />
             ))}
         </div>
@@ -124,7 +140,8 @@ export default function TaskMatrix({ onDateChange }) {
                 key={task.id}
                 task={task}
                 updateTask={updateTask}
-                isEditable={selectedDate === new Date().toISOString().split("T")[0]}
+                deleteTask={deleteTask}
+                isEditable={selectedDate === format(new Date(), "yyyy-MM-dd")}
               />
             ))}
         </div>
@@ -137,7 +154,8 @@ export default function TaskMatrix({ onDateChange }) {
                 key={task.id}
                 task={task}
                 updateTask={updateTask}
-                isEditable={selectedDate === new Date().toISOString().split("T")[0]}
+                deleteTask={deleteTask}
+                isEditable={selectedDate === format(new Date(), "yyyy-MM-dd")}
               />
             ))}
         </div>
