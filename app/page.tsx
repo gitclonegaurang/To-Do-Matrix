@@ -1,4 +1,4 @@
-"use client" // Add this at the top of the file
+"use client"
 
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
@@ -9,11 +9,10 @@ import DailyDashboard from "../components/DailyDashboard"
 import HistoricalDashboard from "../components/HistoricalDashboard"
 import CompletedTasks from "../components/CompletedTasks"
 import { Button } from "@/components/ui/button"
-import { Session } from "@supabase/supabase-js" // Import the Session type
 
 export default function Home() {
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split("T")[0])
-  const [session, setSession] = useState<Session | null>(null) // Explicitly define type as Session | null
+  const [session, setSession] = useState(null)
   const router = useRouter()
 
   useEffect(() => {
@@ -36,7 +35,7 @@ export default function Home() {
     return () => subscription.unsubscribe()
   }, [router])
 
-  const handleDateChange = (newDate) => {
+  const handleDateChange = (newDate: string) => {  // Added type 'string' to newDate
     setSelectedDate(newDate)
   }
 
