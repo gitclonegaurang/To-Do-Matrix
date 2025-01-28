@@ -32,8 +32,13 @@ export default function Auth() {
         if (error) throw error
         router.push("/")
       }
-    } catch (error) {
-      setError(error.message)
+    } catch (error: unknown) {
+      // Type assertion to handle error
+      if (error instanceof Error) {
+        setError(error.message)
+      } else {
+        setError("An unknown error occurred")
+      }
     } finally {
       setLoading(false)
     }
@@ -88,4 +93,3 @@ export default function Auth() {
     </div>
   )
 }
-
