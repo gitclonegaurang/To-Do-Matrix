@@ -1,19 +1,27 @@
-import { Button } from "@/components/ui/button"
-import { Checkbox } from "@/components/ui/checkbox"
-import { Trash2 } from "lucide-react"
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Trash2 } from "lucide-react";
+import { Task } from "./types";
 
-export default function TaskItem({ task, updateTask, deleteTask, isEditable }) {
+interface TaskItemProps {
+  task: Task;
+  updateTask: (task: Task) => Promise<void>;
+  deleteTask: (id: string) => Promise<void>;
+  isEditable: boolean;
+}
+
+export default function TaskItem({ task, updateTask, deleteTask, isEditable }: TaskItemProps) {
   const handleComplete = () => {
     if (isEditable) {
-      updateTask({ ...task, completed: !task.completed })
+      updateTask({ ...task, completed: !task.completed });
     }
-  }
+  };
 
   const handleDelete = () => {
     if (isEditable) {
-      deleteTask(task.id)
+      deleteTask(task.id);
     }
-  }
+  };
 
   return (
     <div className="flex items-center justify-between p-2 border-b">
@@ -34,6 +42,5 @@ export default function TaskItem({ task, updateTask, deleteTask, isEditable }) {
         </Button>
       )}
     </div>
-  )
+  );
 }
-

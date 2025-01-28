@@ -5,8 +5,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from "recharts"
 import { supabase } from "@/lib/supabase"
 
-export default function DailyDashboard({ selectedDate, userId }) {
-  const [data, setData] = useState([])
+interface DailyDashboardProps {
+  selectedDate: string;
+  userId: string;
+}
+
+export default function DailyDashboard({ selectedDate, userId }: DailyDashboardProps) {
+  const [data, setData] = useState<{ name: string; value: number }[]>([])
 
   const fetchTasks = useCallback(async () => {
     console.log("Fetching tasks for date:", selectedDate)

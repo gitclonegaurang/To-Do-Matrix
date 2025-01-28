@@ -19,7 +19,7 @@ function formatDate(date: Date): string {
 }
 
 export default function HistoricalDashboard({ userId }: { userId: string }) {
-  const [data, setData] = useState([])
+  const [data, setData] = useState<{ date: string; completed: number; total: number }[]>([])
   const [weekStart, setWeekStart] = useState(getWeekStart(new Date()))
 
   useEffect(() => {

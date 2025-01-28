@@ -5,17 +5,26 @@ import TaskItem from "./TaskItem";
 import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { format, parseISO, addDays } from "date-fns";
+import {Task } from "./types";
 
-export default function TaskMatrix({ onDateChange, userId }) {
-  const [tasks, setTasks] = useState([]);
-  const [selectedDate, setSelectedDate] = useState(format(new Date(), "yyyy-MM-dd"));
+
+interface TaskMatrixProps {
+  selectedDate: string;
+  onDateChange: (date: string) => void;
+  userId: string;
+}
+
+
+
+export default function TaskMatrix({ selectedDate, onDateChange, userId }: TaskMatrixProps) {
+  const [tasks, setTasks] = useState<Task[]>([]);
 
   const fetchTasks = useCallback(async () => {
     try {
       console.log("Fetching tasks for date:", selectedDate);
       const { data, error } = await supabase
         .from("tasks")
-        .select("*")
+        .select("id, task, urgent, important, completed")
         .eq("date", selectedDate)
         .eq("user_id", userId);
 
@@ -42,29 +51,23 @@ export default function TaskMatrix({ onDateChange, userId }) {
     };
   }, [fetchTasks]);
 
-  const updateTask = async (updatedTask) => {
+  const updateTask = async (task: Task): Promise<void> => {
     try {
-      const today = format(new Date(), "yyyy-MM-dd");
-      if (selectedDate !== today) {
-        console.warn("Cannot update tasks from previous dates");
-        return;
-      }
-
       const { error } = await supabase
         .from("tasks")
-        .update(updatedTask)
-        .eq("id", updatedTask.id)
+        .update({ completed: task.completed })
+        .eq("id", task.id)
         .eq("user_id", userId);
 
       if (error) throw error;
-      console.log("Task updated:", updatedTask);
+      console.log("Task updated:", task);
       fetchTasks();
     } catch (error) {
       console.error("Error updating task:", error);
     }
   };
 
-  const deleteTask = async (taskId) => {
+  const deleteTask = async (taskId: string): Promise<void> => {
     try {
       const { error } = await supabase
         .from("tasks")
@@ -93,15 +96,13 @@ export default function TaskMatrix({ onDateChange, userId }) {
         if (error) throw error;
       }
 
-      setSelectedDate(nextDay);
       onDateChange(nextDay);
     } catch (error) {
       console.error("Error carrying forward tasks:", error);
     }
   };
 
-  const handleDateChange = (newDate) => {
-    setSelectedDate(newDate);
+  const handleDateChange = (newDate: string) => {
     onDateChange(newDate);
   };
 
@@ -120,10 +121,10 @@ export default function TaskMatrix({ onDateChange, userId }) {
       </div>
       <div className="grid grid-cols-2 gap-2 mb-4">
         {[
-          { title: "Urgent & Important", filter: (t) => t.urgent && t.important, bg: "bg-red-100" },
-          { title: "Urgent & Not Important", filter: (t) => t.urgent && !t.important, bg: "bg-yellow-100" },
-          { title: "Not Urgent & Important", filter: (t) => !t.urgent && t.important, bg: "bg-green-100" },
-          { title: "Not Urgent & Not Important", filter: (t) => !t.urgent && !t.important, bg: "bg-blue-100" },
+          { title: "Urgent & Important", filter: (t: Task) => t.urgent && t.important, bg: "bg-red-100" },
+          { title: "Urgent & Not Important", filter: (t: Task) => t.urgent && !t.important, bg: "bg-yellow-100" },
+          { title: "Not Urgent & Important", filter: (t: Task) => !t.urgent && t.important, bg: "bg-green-100" },
+          { title: "Not Urgent & Not Important", filter: (t: Task) => !t.urgent && !t.important, bg: "bg-blue-100" },
         ].map(({ title, filter, bg }) => (
           <div key={title} className={`${bg} p-2`}>
             <h2 className="font-bold">{title}</h2>

@@ -1,51 +1,52 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import { useRouter } from "next/navigation"
-import { supabase } from "@/lib/supabase"
-import TaskMatrix from "../components/TaskMatrix"
-import TaskForm from "../components/TaskForm"
-import DailyDashboard from "../components/DailyDashboard"
-import HistoricalDashboard from "../components/HistoricalDashboard"
-import CompletedTasks from "../components/CompletedTasks"
-import { Button } from "@/components/ui/button"
+import { useState, useEffect } from "react";
+import { Session } from "@supabase/supabase-js";
+import { useRouter } from "next/navigation";
+import { supabase } from "@/lib/supabase";
+import TaskMatrix from "../components/TaskMatrix";
+import TaskForm from "../components/TaskForm";
+import DailyDashboard from "../components/DailyDashboard";
+import HistoricalDashboard from "../components/HistoricalDashboard";
+import CompletedTasks from "../components/CompletedTasks";
+import { Button } from "@/components/ui/button";
 
 export default function Home() {
-  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split("T")[0])
-  const [session, setSession] = useState(null)
-  const router = useRouter()
+  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split("T")[0]);
+  const [session, setSession] = useState<Session | null>(null);
+  const router = useRouter();
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session)
+      setSession(session);
       if (!session) {
-        router.push("/auth")
+        router.push("/auth");
       }
-    })
+    });
 
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session)
+      setSession(session);
       if (!session) {
-        router.push("/auth")
+        router.push("/auth");
       }
-    })
+    });
 
-    return () => subscription.unsubscribe()
-  }, [router])
+    return () => subscription.unsubscribe();
+  }, [router]);
 
-  const handleDateChange = (newDate: string) => {  // Added type 'string' to newDate
-    setSelectedDate(newDate)
-  }
+  const handleDateChange = (newDate: string) => {
+    setSelectedDate(newDate);
+  };
 
   const handleSignOut = async () => {
-    await supabase.auth.signOut()
-    router.push("/auth")
-  }
+    await supabase.auth.signOut();
+    router.push("/auth");
+  };
 
   if (!session) {
-    return null // or a loading spinner
+    return null;
   }
 
   return (
@@ -66,5 +67,5 @@ export default function Home() {
         </div>
       </div>
     </main>
-  )
+  );
 }

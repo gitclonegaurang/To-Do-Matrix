@@ -4,8 +4,19 @@ import { useState, useEffect, useCallback } from "react"
 import { supabase } from "@/lib/supabase"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 
-export default function CompletedTasks({ selectedDate, userId }) {
-  const [completedTasks, setCompletedTasks] = useState([])
+interface CompletedTasksProps {
+  selectedDate: string;
+  userId: string;
+}
+
+export default function CompletedTasks({ selectedDate, userId }: CompletedTasksProps) {
+  interface Task {
+    id: string;
+    task: string;
+    // Add other fields as necessary
+  }
+
+  const [completedTasks, setCompletedTasks] = useState<Task[]>([])
 
   const fetchCompletedTasks = useCallback(async () => {
     console.log("Fetching completed tasks for date:", selectedDate)
