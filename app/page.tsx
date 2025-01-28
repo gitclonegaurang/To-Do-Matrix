@@ -1,4 +1,4 @@
-"use client"
+"use client" // Add this at the top of the file
 
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
@@ -12,21 +12,18 @@ import { Button } from "@/components/ui/button"
 import { Session } from "@supabase/supabase-js" // Import the Session type
 
 export default function Home() {
-  // Explicitly set the type for useState to Session | null
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split("T")[0])
-  const [session, setSession] = useState<Session | null>(null)
+  const [session, setSession] = useState<Session | null>(null) // Explicitly define type as Session | null
   const router = useRouter()
 
   useEffect(() => {
-    // Fetch the current session and handle redirects
-    supabase.auth.getSession().then(({ data }) => {
-      setSession(data.session) // Ensure proper access to data.session
-      if (!data.session) {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session)
+      if (!session) {
         router.push("/auth")
       }
     })
 
-    // Listen for auth state changes
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
@@ -36,27 +33,22 @@ export default function Home() {
       }
     })
 
-    // Cleanup the subscription on unmount
     return () => subscription.unsubscribe()
   }, [router])
 
-  // Handle date changes
-  const handleDateChange = (newDate: string) => {
+  const handleDateChange = (newDate) => {
     setSelectedDate(newDate)
   }
 
-  // Handle user sign-out
   const handleSignOut = async () => {
     await supabase.auth.signOut()
     router.push("/auth")
   }
 
-  // Render a loading state while session is null
   if (!session) {
-    return <div>Loading...</div>
+    return null // or a loading spinner
   }
 
-  // Main UI
   return (
     <main className="container mx-auto p-4">
       <div className="flex justify-between items-center mb-4">
