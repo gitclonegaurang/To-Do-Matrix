@@ -9,20 +9,24 @@ import DailyDashboard from "../components/DailyDashboard"
 import HistoricalDashboard from "../components/HistoricalDashboard"
 import CompletedTasks from "../components/CompletedTasks"
 import { Button } from "@/components/ui/button"
+import { Session } from "@supabase/supabase-js" // Import the Session type
 
 export default function Home() {
+  // Explicitly set the type for useState to Session | null
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split("T")[0])
-  const [session, setSession] = useState(null)
+  const [session, setSession] = useState<Session | null>(null)
   const router = useRouter()
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session)
-      if (!session) {
+    // Fetch the current session and handle redirects
+    supabase.auth.getSession().then(({ data }) => {
+      setSession(data.session) // Ensure proper access to data.session
+      if (!data.session) {
         router.push("/auth")
       }
     })
 
+    // Listen for auth state changes
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
@@ -32,22 +36,27 @@ export default function Home() {
       }
     })
 
+    // Cleanup the subscription on unmount
     return () => subscription.unsubscribe()
   }, [router])
 
-  const handleDateChange = (newDate) => {
+  // Handle date changes
+  const handleDateChange = (newDate: string) => {
     setSelectedDate(newDate)
   }
 
+  // Handle user sign-out
   const handleSignOut = async () => {
     await supabase.auth.signOut()
     router.push("/auth")
   }
 
+  // Render a loading state while session is null
   if (!session) {
-    return null // or a loading spinner
+    return <div>Loading...</div>
   }
 
+  // Main UI
   return (
     <main className="container mx-auto p-4">
       <div className="flex justify-between items-center mb-4">
@@ -68,4 +77,3 @@ export default function Home() {
     </main>
   )
 }
-
